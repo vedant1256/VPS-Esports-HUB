@@ -41,8 +41,14 @@ const protect = async (req, res, next) => {
   }
 };
 
+const ADMIN_EMAILS = [
+  "vedantjadhav30.7.2007@gmail.com",
+  "shrikrishnadevkar51@gmail.com",
+  "parthpronarkhede@gmail.com"
+];
+
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'ADMIN') {
+  if (req.user && (req.user.role === 'ADMIN' || (req.user.email && ADMIN_EMAILS.includes(req.user.email)))) {
     next();
   } else {
     res.status(403).json({ error: 'Not authorized. Overseer access required.' });
