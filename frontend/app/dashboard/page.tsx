@@ -77,6 +77,17 @@ export default function DashboardPage() {
     );
   });
 
+  // Full-screen loading state — no fake data shown
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-brand-indigo">
+        <Loader2 size={40} className="animate-spin mb-3 text-brand-indigo" />
+        <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Loading Arena...</p>
+        <p className="text-[11px] text-slate-300 mt-1">Fetching live tournaments</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md md:max-w-4xl lg:max-w-5xl mx-auto px-4 pt-3.5 space-y-4">
       
@@ -87,7 +98,7 @@ export default function DashboardPage() {
             <span>Welcome, Champion!</span>
             <span className="text-base">⚡</span>
           </h2>
-          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Ready to dominate today's custom rooms?</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-0.5">Ready to dominate today&apos;s custom rooms?</p>
         </div>
         <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full border border-brand-borderLight shadow-sm">
           <svg className="w-3.5 h-3.5 text-brand-mint" fill="currentColor" viewBox="0 0 20 20">
@@ -98,73 +109,64 @@ export default function DashboardPage() {
       </section>
       {/* END: WelcomeAndQuickStatusBanner */}
 
-      {/* BEGIN: FeaturedSpotlightTournament */}
-      {spotlightTournament && !loading && (
+      {/* BEGIN: FeaturedSpotlightTournament — ONLY from real data */}
+      {spotlightTournament && (
       <section className="relative rounded-3xl p-4 bg-white border border-indigo-100 shadow-card-hover overflow-hidden">
-        {/* Light decorative background accents */}
         <div className="absolute -top-12 -right-12 w-36 h-36 bg-gradient-to-br from-indigo-100/70 to-purple-100/40 rounded-full blur-2xl pointer-events-none"></div>
         <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-teal-100/50 rounded-full blur-xl pointer-events-none"></div>
 
-        {/* Header badges */}
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-1.5">
             <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-brand-indigo border border-indigo-200/70 text-[10px] font-bold tracking-wider uppercase">
-              {spotlightTournament?.gameName || 'FREE FIRE'}
+              {spotlightTournament.gameName || 'Battle Royale'}
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-amber-50 text-brand-amber border border-amber-200 text-[10px] font-bold uppercase flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-amber animate-pulse"></span>
-              MEGA EVENT
-            </span>
-          </div>
-          <div className="text-[10px] font-semibold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200 flex items-center gap-1 shadow-sm">
-            <svg className="w-3 h-3 text-brand-indigo" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>Starts: <span className="text-brand-indigo font-bold">01h 45m</span></span>
+            {spotlightTournament.status === 'REGISTRATION_OPEN' && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-bold uppercase flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Registration Open
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Title & Match Info */}
         <div className="mt-3 relative z-10">
           <h3 className="text-base sm:text-lg font-extrabold text-slate-900 font-gaming tracking-wide flex items-center gap-1.5">
-            🏆 {spotlightTournament?.title || 'Kalahari Mega Squad Championship'}
+            🏆 {spotlightTournament.title}
           </h3>
           <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium mt-1">
             <span className="flex items-center gap-1">
               <svg className="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
                 <path clipRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" fillRule="evenodd" />
               </svg>
-              {spotlightTournament?.map || 'Kalahari'}
+              {spotlightTournament.map || 'Bermuda'}
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
               <svg className="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
               </svg>
-              {spotlightTournament?.teamMode || 'Squad (4v4)'}
+              {spotlightTournament.teamMode}
             </span>
           </div>
         </div>
 
-        {/* Entry and Prize Pool Highlighted Cards */}
         <div className="grid grid-cols-2 gap-2.5 mt-3 relative z-10">
           <div className="bg-slate-50/90 border border-slate-200/80 p-2.5 rounded-xl text-center">
             <span className="text-[9px] uppercase font-bold tracking-wider text-slate-500 block">ENTRY FEE</span>
-            <span className="text-lg font-black text-amber-600 font-gaming leading-tight">₹{spotlightTournament?.entryFee || 200}</span>
-            <span className="text-[9px] text-slate-400 block mt-0.5">Per Squad</span>
+            <span className="text-lg font-black text-amber-600 font-gaming leading-tight">₹{spotlightTournament.entryFee}</span>
+            <span className="text-[9px] text-slate-400 block mt-0.5">Per {spotlightTournament.teamMode}</span>
           </div>
           <div className="bg-emerald-50/70 border border-emerald-200/80 p-2.5 rounded-xl text-center">
             <span className="text-[9px] uppercase font-bold tracking-wider text-emerald-700 block">PRIZE POOL</span>
-            <span className="text-lg font-black text-emerald-600 font-gaming leading-tight">₹{spotlightTournament?.prizePool || 10000}</span>
+            <span className="text-lg font-black text-emerald-600 font-gaming leading-tight">₹{spotlightTournament.prizePool}</span>
             <span className="text-[9px] text-emerald-600/80 block mt-0.5">Winner: 60%</span>
           </div>
         </div>
 
-        {/* Progress bar and CTA */}
         <div className="mt-3.5 relative z-10">
           <div className="flex items-center justify-between text-[11px] font-semibold mb-1.5">
             <span className="text-slate-600">Slots Filled</span>
-            <span className="text-brand-indigo font-bold">{spotlightSlots} / {spotlightMax} Teams</span>
+            <span className="text-brand-indigo font-bold">{spotlightTournament.currentParticipants || 0} / {spotlightTournament.maxParticipants} Teams</span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div 
@@ -173,7 +175,7 @@ export default function DashboardPage() {
             ></div>
           </div>
           
-          <Link href={`/tournaments/${spotlightTournament?.id}`}>
+          <Link href={`/tournaments/${spotlightTournament.id}`}>
             <button 
               className="w-full mt-3 py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-indigo to-brand-violet text-white font-gaming text-sm font-bold uppercase tracking-wider shadow-glow-primary active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 hover:from-brand-violet hover:to-brand-indigo" 
               type="button"
@@ -214,14 +216,9 @@ export default function DashboardPage() {
 
       {/* BEGIN: TournamentCardsGrid */}
       <section className="space-y-3" data-purpose="tournaments-list">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 text-brand-indigo">
-            <Loader2 size={32} className="animate-spin mb-2 text-brand-indigo" />
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Loading Tournaments...</p>
-          </div>
-        ) : filteredTournaments.length === 0 ? (
+        {filteredTournaments.length === 0 ? (
           <div className="bg-white border border-brand-borderLight p-8 rounded-2xl text-center text-slate-500 shadow-card-subtle">
-            <p className="text-sm font-bold text-slate-700">No tournaments matching "{filter}"</p>
+            <p className="text-sm font-bold text-slate-700">No tournaments available</p>
             <p className="text-xs text-slate-400 mt-1">Check back soon for new room registrations.</p>
           </div>
         ) : (
