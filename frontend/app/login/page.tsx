@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../lib/axios';
 import { ShieldAlert, Loader2, CheckSquare, Square, X, MapPin, Gamepad2 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 
 // 🛑 Razorpay Restricted States
 const RESTRICTED_STATES = [
@@ -48,6 +50,13 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
+    // Initialize Native Google Sign-In for Capacitor Android/iOS
+    if (Capacitor.isNativePlatform()) {
+      GoogleSignIn.initialize({
+        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '623388941554-5pobvg9g2us1mea4p47bg24ekl9k5on3.apps.googleusercontent.com',
+        scopes: ['email', 'profile'],
+      }).catch(console.error);
+    }
     if (typeof window !== 'undefined' && window.location.hash) {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
@@ -136,7 +145,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError('');
 
@@ -162,7 +171,42 @@ export default function LoginPage() {
       localStorage.removeItem('pending_google_signup_state');
     }
 
-    // Hardcoding to guarantee it perfectly matches Google Cloud Console
+    // 1. NATIVE ANDROID/IOS GOOGLE SIGN-IN
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const result = await GoogleSignIn.signIn();
+        // result.authentication.accessToken exists on Android when scopes are requested
+        // Fallback to idToken if accessToken is empty
+        const tokenToSend = result.authentication?.accessToken || result.authentication?.idToken;
+        
+        if (!tokenToSend) throw new Error("No token returned from Google");
+
+        if (!isLogin) {
+          // Signup Flow
+          setPendingAction({ type: 'google', payload: { access_token: tokenToSend, state } });
+          setTermsChecked(false);
+          setShowTermsModal(true);
+          setGoogleLoading(false);
+          return;
+        } else {
+          // Login Flow
+          const res = await api.post('/auth/google', { access_token: tokenToSend });
+          const token = res.data?.token;
+          if (token) {
+            localStorage.setItem('token', token);
+            login(token, res.data);
+            window.location.replace('/dashboard');
+          }
+        }
+      } catch (err: any) {
+        console.error("Native Google Login Error:", err);
+        setError(`Google Login Failed: ${err.message || 'Unknown Native Error'}`);
+        setGoogleLoading(false);
+      }
+      return;
+    }
+
+    // 2. WEB BROWSER GOOGLE SIGN-IN
     const redirectUri = 'https://vps-esportshub-app.vercel.app/login';
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile`;
     
