@@ -1,4 +1,10 @@
 {
+  "name": "vps-esportshub-root",
+  "private": true,
+  "scripts": {
+    "build": "cd backend && npm install",
+    "start": "cd backend && npm start"
+  },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",
     "cors": "^2.8.6",
