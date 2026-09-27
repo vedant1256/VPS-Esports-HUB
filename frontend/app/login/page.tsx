@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../lib/axios';
 import { ShieldAlert, Loader2, CheckSquare, Square, X, MapPin, Gamepad2 } from 'lucide-react';
 import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
+import { Capacitor } from '@capacitor/core';
 
 // 🛑 Razorpay Restricted States
 const RESTRICTED_STATES = [
@@ -180,7 +181,7 @@ export default function LoginPage() {
     // APPROACH 1: Native Android (like ChatGPT)
     // Uses Google Play Services SDK directly
     // ============================================
-    const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
+    const isNative = Capacitor.isNativePlatform();
     if (isNative) {
       try {
         await GoogleSignIn.initialize({ clientId, scopes: ['email', 'profile'] });
