@@ -31,7 +31,11 @@ jobs:
         
       - name: Generate Android and Assets
         working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_URL: https://vps-esports-hub.onrender.com/api
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: 623388941554-5pobvg9g2us1mea4p47bg24ekl9k5on3.apps.googleusercontent.com
         run: |
+          npm run build
           rm -rf android
           npx cap add android
           npx @capacitor/assets generate --android

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../lib/axios';
 import { ShieldAlert, Loader2, CheckSquare, Square, X, MapPin, Gamepad2 } from 'lucide-react';
+import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 
 // 🛑 Razorpay Restricted States
 const RESTRICTED_STATES = [
@@ -180,11 +181,10 @@ export default function LoginPage() {
     // Uses Google Play Services SDK directly
     // ============================================
     const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
-    if (isNative && (window as any).Capacitor?.Plugins?.GoogleSignIn) {
+    if (isNative) {
       try {
-        const GSI = (window as any).Capacitor.Plugins.GoogleSignIn;
-        await GSI.initialize({ clientId, scopes: ['email', 'profile'] });
-        const result = await GSI.signIn();
+        await GoogleSignIn.initialize({ clientId, scopes: ['email', 'profile'] });
+        const result = await GoogleSignIn.signIn();
         const tokenToSend = result.accessToken || result.idToken;
         if (!tokenToSend) throw new Error("No token received");
         await processGoogleToken(tokenToSend);
