@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'VPS EsportsHub',
   webDir: 'public',
   server: {
-    url: 'https://vps-esportshub.vercel.app',
+    url: 'https://vps-esportshub-app.vercel.app',
     cleartext: true
   }
 };
