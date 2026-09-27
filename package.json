@@ -2,6 +2,7 @@
   "name": "vps-esportshub-root",
   "private": true,
   "scripts": {
+    "postinstall": "cd backend && npm install",
     "build": "cd backend && npm install",
     "start": "cd backend && npm start"
   },
