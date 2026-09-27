@@ -24,7 +24,15 @@ export default function DashboardPage() {
   const filters = ['All', 'Solo', 'Duo', 'Squad', 'Clash Squad'];
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Accept token from native Capacitor Google login redirect
+    const nativeToken = searchParams.get('nativeToken');
+    if (nativeToken) {
+      localStorage.setItem('token', nativeToken);
+      // Clean the URL so the token isn't visible
+      window.history.replaceState(null, '', '/dashboard');
+    }
+
+    const token = nativeToken || localStorage.getItem('token');
     if (!token) {
       router.push('/login');
       return;
