@@ -41,7 +41,7 @@ jobs:
         working-directory: ./frontend/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android
           
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
