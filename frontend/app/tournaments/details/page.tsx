@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ShieldAlert, Users, Map, Loader2, ArrowLeft, Lock, Gamepad2, QrCode, CheckCircle2, X, Clock } from 'lucide-react';
@@ -10,7 +10,8 @@ import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 
 export default function TournamentDetailsPage() {
-  const params = useParams();
+  const searchParams = useSearchParams();
+  const tournamentId = searchParams.get('id');
   const router = useRouter();
   const { user } = useAuthStore();
   
@@ -32,7 +33,7 @@ export default function TournamentDetailsPage() {
   const fetchRoomCredentials = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await api.get(`/tournaments/${params.id}/room-credentials`, {
+      const res = await api.get(`/tournaments/${tournamentId}/room-credentials`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCredentials(res.data);
@@ -45,7 +46,7 @@ export default function TournamentDetailsPage() {
   const fetchTournament = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await api.get(`/tournaments/${params.id}`, {
+      const res = await api.get(`/tournaments/${tournamentId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       setTournament(res.data);
@@ -63,7 +64,7 @@ export default function TournamentDetailsPage() {
     const socket = io(socketURL);
 
     socket.on('roomDataReleased', (data) => {
-      if (data.tournamentId === params.id) {
+      if (data.tournamentId === tournamentId) {
         toast.success("🚨 Room Credentials are now Live! Click Reveal Credentials.", {
           duration: 6000,
           position: 'top-center',
@@ -78,7 +79,7 @@ export default function TournamentDetailsPage() {
     return () => {
       socket.disconnect();
     };
-  }, [params.id]);
+  }, [tournamentId]);
 
   const initiateJoin = () => {
     const token = localStorage.getItem('token');
@@ -96,7 +97,7 @@ export default function TournamentDetailsPage() {
       interval = setInterval(async () => {
         try {
           const token = localStorage.getItem('token');
-          const res = await api.get(`/payments/status/${params.id}`, {
+          const res = await api.get(`/payments/status/${tournamentId}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
           });
           
@@ -122,7 +123,7 @@ export default function TournamentDetailsPage() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [paymentStep, params.id]);
+  }, [paymentStep, tournamentId]);
 
   const submitUtr = async () => {
     if (!/^\d{12}$/.test(utr.trim())) {
@@ -134,7 +135,7 @@ export default function TournamentDetailsPage() {
     
     try {
       const token = localStorage.getItem('token');
-      const res = await api.post(`/payments/submit-utr`, { tournamentId: params.id, utr: utr.trim() }, {
+      const res = await api.post(`/payments/submit-utr`, { tournamentId: tournamentId, utr: utr.trim() }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

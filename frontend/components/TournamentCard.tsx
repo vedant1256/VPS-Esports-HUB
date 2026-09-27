@@ -49,7 +49,7 @@ export default function TournamentCard({ tournament: t, onOpenRules }: Tournamen
 
         {/* Title & Match Info */}
         <div className="mt-2.5">
-          <Link href={`/tournaments/${t.id}`}>
+          <Link href={`/tournaments/details?id=${t.id}`}>
             <h4 className="text-sm font-bold text-slate-900 font-gaming flex items-center gap-1 hover:text-brand-indigo transition-colors">
               <span>🔥</span> {t.title}
             </h4>
@@ -96,7 +96,7 @@ export default function TournamentCard({ tournament: t, onOpenRules }: Tournamen
         </div>
         
         <div className="flex items-center gap-2 mt-2.5">
-          <Link href={`/tournaments/${t.id}`} className="flex-1">
+          <Link href={`/tournaments/details?id=${t.id}`} className="flex-1">
             <button 
               className="w-full py-2 rounded-xl bg-brand-indigo hover:bg-brand-violet text-white font-gaming text-xs font-bold uppercase tracking-wider shadow-sm active:scale-[0.98] transition-all" 
               type="button"

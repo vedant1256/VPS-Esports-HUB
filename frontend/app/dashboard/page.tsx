@@ -175,7 +175,7 @@ export default function DashboardPage() {
             ></div>
           </div>
           
-          <Link href={`/tournaments/${spotlightTournament.id}`}>
+          <Link href={`/tournaments/details?id=${spotlightTournament.id}`}>
             <button 
               className="w-full mt-3 py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-indigo to-brand-violet text-white font-gaming text-sm font-bold uppercase tracking-wider shadow-glow-primary active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 hover:from-brand-violet hover:to-brand-indigo" 
               type="button"
