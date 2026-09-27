@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../lib/axios';
 import { ShieldAlert, Loader2, CheckSquare, Square, X, MapPin, Gamepad2 } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
-import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 
 // 🛑 Razorpay Restricted States
 const RESTRICTED_STATES = [
@@ -50,44 +48,26 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
-    // Initialize Native Google Sign-In for Capacitor Android/iOS
-    const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
-    if (isNative) {
-      GoogleSignIn.initialize({
-        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '623388941554-5pobvg9g2us1mea4p47bg24ekl9k5on3.apps.googleusercontent.com',
-        scopes: ['email', 'profile'],
-      }).catch(console.error);
-    }
+    // Handle hash tokens from old redirect flow (cleanup)
     if (typeof window !== 'undefined' && window.location.hash) {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
-      
       if (accessToken) {
         setGoogleLoading(true);
         window.history.replaceState(null, '', window.location.pathname);
-        const savedState = localStorage.getItem('pending_google_signup_state');
-        
-        if (savedState) {
-          setPendingAction({ type: 'google', payload: { access_token: accessToken, state: savedState } });
-          setTermsChecked(false);
-          setShowTermsModal(true);
-          setGoogleLoading(false);
-          localStorage.removeItem('pending_google_signup_state');
-        } else {
-          api.post('/auth/google', { access_token: accessToken })
-            .then((res: any) => {
-              const token = res.data?.token;
-              if (token) {
-                localStorage.setItem('token', token);
-                login(token, res.data);
-                window.location.replace('/dashboard');
-              }
-            })
-            .catch((err: any) => {
-              setError(`Google Login Failed: ${err.response?.data?.error || err.message}`);
-              setGoogleLoading(false);
-            });
-        }
+        api.post('/auth/google', { access_token: accessToken })
+          .then((res: any) => {
+            const token = res.data?.token;
+            if (token) {
+              localStorage.setItem('token', token);
+              login(token, res.data);
+              window.location.replace('/dashboard');
+            }
+          })
+          .catch((err: any) => {
+            setError(`Google Login Failed: ${err.response?.data?.error || err.message}`);
+            setGoogleLoading(false);
+          });
       }
     }
   }, [login]);
@@ -146,11 +126,37 @@ export default function LoginPage() {
     }
   };
 
+  // Process the Google access_token after receiving it (from popup or native)
+  const processGoogleToken = async (accessToken: string) => {
+    if (!isLogin) {
+      // Signup: show terms modal first
+      setPendingAction({ type: 'google', payload: { access_token: accessToken, state } });
+      setTermsChecked(false);
+      setShowTermsModal(true);
+      setGoogleLoading(false);
+      return;
+    }
+    // Login: send directly to backend
+    try {
+      const res = await api.post('/auth/google', { access_token: accessToken });
+      const token = res.data?.token;
+      if (token) {
+        localStorage.setItem('token', token);
+        login(token, res.data);
+        window.location.replace('/dashboard');
+      }
+    } catch (err: any) {
+      setError(`Google Login Failed: ${err.response?.data?.error || err.message}`);
+      setGoogleLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError('');
 
-    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
       setError("System Error: Google Client ID is missing.");
       setGoogleLoading(false);
       return;
@@ -167,53 +173,68 @@ export default function LoginPage() {
         setGoogleLoading(false);
         return;
       }
-      localStorage.setItem('pending_google_signup_state', state);
-    } else {
-      localStorage.removeItem('pending_google_signup_state');
     }
 
+    // ============================================
+    // APPROACH 1: Native Android (like ChatGPT)
+    // Uses Google Play Services SDK directly
+    // ============================================
     const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
-
-    // 1. NATIVE ANDROID/IOS GOOGLE SIGN-IN
-    if (isNative) {
+    if (isNative && (window as any).Capacitor?.Plugins?.GoogleSignIn) {
       try {
-        const result = await GoogleSignIn.signIn();
-        // Fallback to idToken if accessToken is empty
+        const GSI = (window as any).Capacitor.Plugins.GoogleSignIn;
+        await GSI.initialize({ clientId, scopes: ['email', 'profile'] });
+        const result = await GSI.signIn();
         const tokenToSend = result.accessToken || result.idToken;
-        
-        if (!tokenToSend) throw new Error("No token returned from Google");
-
-        if (!isLogin) {
-          // Signup Flow
-          setPendingAction({ type: 'google', payload: { access_token: tokenToSend, state } });
-          setTermsChecked(false);
-          setShowTermsModal(true);
-          setGoogleLoading(false);
-          return;
-        } else {
-          // Login Flow
-          const res = await api.post('/auth/google', { access_token: tokenToSend });
-          const token = res.data?.token;
-          if (token) {
-            localStorage.setItem('token', token);
-            login(token, res.data);
-            window.location.replace('/dashboard');
-          }
-        }
+        if (!tokenToSend) throw new Error("No token received");
+        await processGoogleToken(tokenToSend);
       } catch (err: any) {
-        console.error("Native Google Login Error:", err);
-        setError(`Google Login Failed: ${err.message || 'Unknown Native Error'}`);
-        setGoogleLoading(false);
+        if (err.message?.includes('canceled')) {
+          setGoogleLoading(false);
+        } else {
+          setError(`Google Login Failed: ${err.message || 'Unknown error'}`);
+          setGoogleLoading(false);
+        }
       }
       return;
     }
 
-    // 2. WEB BROWSER GOOGLE SIGN-IN
-    // Uses window.location.origin so it automatically works on both localhost:3000 and Vercel!
-    const redirectUri = window.location.origin + '/login';
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent('email profile')}`;
-    
-    window.location.href = googleAuthUrl;
+    // ============================================
+    // APPROACH 2: Web Browser (GIS Popup)
+    // No redirect URIs needed! Token comes via callback.
+    // This is what works in regular Chrome browsers.
+    // ============================================
+    const startGooglePopup = () => {
+      const google = (window as any).google;
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'email profile',
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            await processGoogleToken(tokenResponse.access_token);
+          }
+        },
+        error_callback: () => {
+          setError('Google Login was cancelled or failed.');
+          setGoogleLoading(false);
+        }
+      });
+      client.requestAccessToken();
+    };
+
+    // Load the Google Identity Services script
+    if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+      startGooglePopup();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.onload = startGooglePopup;
+      script.onerror = () => {
+        setError("Failed to load Google services. Check your internet connection.");
+        setGoogleLoading(false);
+      };
+      document.body.appendChild(script);
+    }
   };
 
   const confirmTermsAndProceed = async () => {
