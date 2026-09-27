@@ -1,9 +1,0 @@
-{
-	"appId": "com.vpsesportshub.app",
-	"appName": "VPS EsportsHub",
-	"webDir": "public",
-	"server": {
-		"url": "https://vps-esportshub.vercel.app",
-		"cleartext": true
-	}
-}
