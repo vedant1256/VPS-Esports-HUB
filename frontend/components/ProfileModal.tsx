@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, User as UserIcon, Crosshair, Save, Copy, CheckCircle2, Gift } from 'lucide-react';
+import { X, User as UserIcon, Crosshair, Save, Copy, CheckCircle2, Gift, LogOut, ShieldAlert } from 'lucide-react';
 import api from '../lib/axios';
 
 interface ProfileModalProps {
@@ -137,6 +137,28 @@ export default function ProfileModal({ isOpen, onClose, user }: ProfileModalProp
                 {copied ? <CheckCircle2 size={16} className="text-emerald-600" /> : <Copy size={16} />}
               </button>
             </div>
+          </div>
+
+          {/* Action Buttons (Admin & Logout) */}
+          <div className="mt-4 pt-4 border-t border-brand-borderLight space-y-2">
+            {(user?.role === 'ADMIN' || (user?.email && ["vedantjadhav30.7.2007@gmail.com", "shrikrishnadevkar51@gmail.com", "parthpronarkhede@gmail.com"].includes(user.email))) && (
+              <a 
+                href="/admin"
+                className="w-full flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold py-2.5 px-4 rounded-xl transition-all text-xs tracking-wide uppercase"
+              >
+                <ShieldAlert size={15} /> Admin Dashboard
+              </a>
+            )}
+            
+            <button 
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.replace('/login');
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-2.5 px-4 rounded-xl transition-all text-xs tracking-wide uppercase"
+            >
+              <LogOut size={15} /> Log Out
+            </button>
           </div>
 
         </div>
