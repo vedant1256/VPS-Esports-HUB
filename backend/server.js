@@ -23,12 +23,16 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:3000',
   'https://vps-esportshub.vercel.app',
-  'https://vps-esportshub-dfd5.vercel.app'
+  'https://vps-esportshub-dfd5.vercel.app',
+  'https://vps-esportshub-app.vercel.app'
 ];
 
 // Fallback just in case you update your Render environment variable later
 if (process.env.FRONTEND_URL && !allowedOrigins.includes(process.env.FRONTEND_URL)) {
   allowedOrigins.push(process.env.FRONTEND_URL);
+}
+if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
+  allowedOrigins.push(process.env.CLIENT_URL);
 }
 
 // ==========================================
