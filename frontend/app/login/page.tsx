@@ -1,7 +1,7 @@
 // frontend/app/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../lib/axios';
@@ -46,6 +46,41 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      
+      if (accessToken) {
+        setGoogleLoading(true);
+        window.history.replaceState(null, '', window.location.pathname);
+        const savedState = localStorage.getItem('pending_google_signup_state');
+        
+        if (savedState) {
+          setPendingAction({ type: 'google', payload: { access_token: accessToken, state: savedState } });
+          setTermsChecked(false);
+          setShowTermsModal(true);
+          setGoogleLoading(false);
+          localStorage.removeItem('pending_google_signup_state');
+        } else {
+          api.post('/auth/google', { access_token: accessToken })
+            .then((res: any) => {
+              const token = res.data?.token;
+              if (token) {
+                localStorage.setItem('token', token);
+                login(token, res.data);
+                window.location.replace('/dashboard');
+              }
+            })
+            .catch((err: any) => {
+              setError(`Google Login Failed: ${err.response?.data?.error || err.message}`);
+              setGoogleLoading(false);
+            });
+        }
+      }
+    }
+  }, [login]);
 
   // Modal States (Hidden by default, triggered ONLY after button click)
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -105,75 +140,32 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setError('');
 
-    const startGoogleFlow = () => {
-      const google = (window as any).google;
-      if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-        setError("System Error: Google Client ID is missing.");
+    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+      setError("System Error: Google Client ID is missing.");
+      setGoogleLoading(false);
+      return;
+    }
+
+    if (!isLogin) {
+      if (!state) {
+        setError("Please select your State of Residence before signing up with Google.");
         setGoogleLoading(false);
         return;
       }
-
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        scope: 'email profile',
-        callback: async (tokenResponse: any) => {
-          if (tokenResponse && tokenResponse.access_token) {
-            if (!isLogin) {
-              if (!state) {
-                setError("Please select your State of Residence before signing up with Google.");
-                setGoogleLoading(false);
-                return;
-              }
-              if (RESTRICTED_STATES.includes(state)) {
-                setError("Cash tournaments are restricted in your state. Registration not allowed.");
-                setGoogleLoading(false);
-                return;
-              }
-              // For new signups, show Terms Modal before hitting backend to create account
-              setPendingAction({ type: 'google', payload: { access_token: tokenResponse.access_token, state } });
-              setTermsChecked(false);
-              setShowTermsModal(true);
-              setGoogleLoading(false);
-              return;
-            }
-
-            try {
-              // Existing user login
-              const res = await api.post('/auth/google', { access_token: tokenResponse.access_token });
-              
-              const token = res.data?.token;
-              if (token && typeof window !== 'undefined') {
-                localStorage.setItem('token', token);
-                login(token, res.data);
-                window.location.replace('/dashboard');
-              }
-            } catch (err: any) {
-              setError(`Google Login Failed: ${err.response?.data?.error || err.message}`);
-            } finally {
-              setGoogleLoading(false);
-            }
-          }
-        },
-        error_callback: () => {
-          setError('Google Login window was closed or failed to connect.');
-          setGoogleLoading(false);
-        }
-      });
-      client.requestAccessToken();
-    };
-
-    if (typeof window !== 'undefined' && (window as any).google) {
-      startGoogleFlow();
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.onload = startGoogleFlow;
-      script.onerror = () => {
-        setError("Failed to load Google services. Check your internet connection.");
+      if (RESTRICTED_STATES.includes(state)) {
+        setError("Cash tournaments are restricted in your state. Registration not allowed.");
         setGoogleLoading(false);
-      };
-      document.body.appendChild(script);
+        return;
+      }
+      localStorage.setItem('pending_google_signup_state', state);
+    } else {
+      localStorage.removeItem('pending_google_signup_state');
     }
+
+    const redirectUri = window.location.origin + '/login';
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email profile`;
+    
+    window.location.href = googleAuthUrl;
   };
 
   const confirmTermsAndProceed = async () => {
