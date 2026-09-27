@@ -177,7 +177,7 @@ export default function LoginPage() {
         const result = await GoogleSignIn.signIn();
         // result.authentication.accessToken exists on Android when scopes are requested
         // Fallback to idToken if accessToken is empty
-        const tokenToSend = result.authentication?.accessToken || result.authentication?.idToken;
+        const tokenToSend = result.accessToken || result.idToken;
         
         if (!tokenToSend) throw new Error("No token returned from Google");
 
