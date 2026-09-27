@@ -162,7 +162,8 @@ export default function LoginPage() {
       localStorage.removeItem('pending_google_signup_state');
     }
 
-    const redirectUri = window.location.origin + '/login';
+    // Hardcoding to guarantee it perfectly matches Google Cloud Console
+    const redirectUri = 'https://vps-esportshub-app.vercel.app/login';
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email profile`;
     
     window.location.href = googleAuthUrl;
