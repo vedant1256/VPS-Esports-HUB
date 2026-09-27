@@ -51,7 +51,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Initialize Native Google Sign-In for Capacitor Android/iOS
-    if (Capacitor.isNativePlatform()) {
+    const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
+    if (isNative) {
       GoogleSignIn.initialize({
         clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '623388941554-5pobvg9g2us1mea4p47bg24ekl9k5on3.apps.googleusercontent.com',
         scopes: ['email', 'profile'],
@@ -171,11 +172,12 @@ export default function LoginPage() {
       localStorage.removeItem('pending_google_signup_state');
     }
 
+    const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNative;
+
     // 1. NATIVE ANDROID/IOS GOOGLE SIGN-IN
-    if (Capacitor.isNativePlatform()) {
+    if (isNative) {
       try {
         const result = await GoogleSignIn.signIn();
-        // result.authentication.accessToken exists on Android when scopes are requested
         // Fallback to idToken if accessToken is empty
         const tokenToSend = result.accessToken || result.idToken;
         
@@ -209,7 +211,7 @@ export default function LoginPage() {
     // 2. WEB BROWSER GOOGLE SIGN-IN
     // Uses window.location.origin so it automatically works on both localhost:3000 and Vercel!
     const redirectUri = window.location.origin + '/login';
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent('email profile')}`;
     
     window.location.href = googleAuthUrl;
   };
