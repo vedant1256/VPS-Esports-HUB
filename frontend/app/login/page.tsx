@@ -207,7 +207,8 @@ export default function LoginPage() {
     }
 
     // 2. WEB BROWSER GOOGLE SIGN-IN
-    const redirectUri = 'https://vps-esportshub-app.vercel.app/login';
+    // Uses window.location.origin so it automatically works on both localhost:3000 and Vercel!
+    const redirectUri = window.location.origin + '/login';
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile`;
     
     window.location.href = googleAuthUrl;
